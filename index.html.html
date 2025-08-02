@@ -1,0 +1,100 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Petrol Pump Locator</title>
+    <style>
+        #map {{
+            height: 90vh;
+            width: 100%;
+        }}
+        #controls {{
+            margin: 10px;
+        }}
+    </style>
+</head>
+<body>
+    <h2>Petrol Pump Locator</h2>
+    <div id="controls">
+        <input type="text" id="searchBox" placeholder="Search by pump name or city">
+        <input type="text" id="fromLocation" placeholder="From">
+        <input type="text" id="toLocation" placeholder="To">
+        <button onclick="calculateRoute()">Show Route</button>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        let map;
+        let directionsService;
+        let directionsRenderer;
+        let markers = [];
+
+        function initMap() {{
+            map = new google.maps.Map(document.getElementById("map"), {{
+                center: {{ lat: 22.9734, lng: 78.6569 }},
+                zoom: 5
+            }});
+
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer();
+            directionsRenderer.setMap(map);
+
+            const pumps = {pumps_js};
+
+            pumps.forEach(function(pump) {{
+                const marker = new google.maps.Marker({{
+                    position: {{ lat: pump.Latitude, lng: pump.Longitude }},
+                    map: map,
+                    title: pump.Name
+                }});
+
+                const infoWindow = new google.maps.InfoWindow({{
+                    content: '<strong>' + pump.Name + '</strong><br>' +
+                             'City: ' + pump.City + '<br>' +
+                             'State: ' + pump.State + '<br>' +
+                             'Fuel Price: ' + pump["Fuel Price"]
+                }});
+
+                marker.addListener("click", function() {{
+                    infoWindow.open(map, marker);
+                }});
+
+                markers.push({{ marker: marker, pump: pump }});
+            }});
+
+            document.getElementById("searchBox").addEventListener("input", function() {{
+                const query = this.value.toLowerCase();
+                markers.forEach(function(item) {{
+                    const match = item.pump.Name.toLowerCase().includes(query) || item.pump.City.toLowerCase().includes(query);
+                    item.marker.setVisible(match);
+                }});
+            }});
+        }}
+
+        function calculateRoute() {{
+            const from = document.getElementById("fromLocation").value;
+            const to = document.getElementById("toLocation").value;
+
+            if (!from || !to) {{
+                alert("Please enter both From and To locations.");
+                return;
+            }}
+
+            directionsService.route({{
+                origin: from,
+                destination: to,
+                travelMode: google.maps.TravelMode.DRIVING
+            }}, function(response, status) {{
+                if (status === "OK") {{
+                    directionsRenderer.setDirections(response);
+                }} else {{
+                    alert("Directions request failed due to " + status);
+                }}
+            }});
+        }}
+    </script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB3v-OqI83pLDVoWzbeYhlK-T8JGfJGOcU&callback=initMap">
+    </script>
+</body>
+</html>
